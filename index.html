@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Balões do Amor 🎈 – Deliane & Rúben</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#fff5f7;           /* rosa muito claro */
+      --primary:#ff4d6d;      /* rosa forte */
+      --accent:#ffd166;       /* amarelo suave */
+      --card:#ffffff;         /* branco */
+      --text:#2a2a2a;         /* cinzento escuro */
+      --muted:#666;           /* cinzento médio */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Poppins", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 600px at 50% -200px, #ffe3ea 0%, var(--bg) 40%, var(--bg) 100%);
+      color:var(--text);
+      overflow:hidden; /* evita scroll enquanto balões sobem */
+    }
+
+    /* Cabeçalho fixo */
+    header{
+      position:fixed; inset:0 0 auto 0; height:64px; display:flex; align-items:center; justify-content:center; gap:.75rem;
+      background:rgba(255,255,255,.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border-bottom:1px solid rgba(0,0,0,.06);
+      z-index:50; padding:0 .75rem;
+    }
+    header h1{font-size:clamp(1rem, 3.6vw, 1.25rem); font-weight:700; margin:0; letter-spacing:.3px}
+    header .tag{font-weight:600; color:var(--primary)}
+    .controls{position:absolute; right:.75rem; display:flex; gap:.5rem}
+    .btn{
+      border:0; border-radius:999px; padding:.55rem .85rem; background:var(--primary); color:#fff; font-weight:600; cursor:pointer;
+      box-shadow:0 6px 18px rgba(255,77,109,.3); transform:translateZ(0);
+    }
+    .btn.secondary{background:#111; box-shadow:0 6px 18px rgba(0,0,0,.2)}
+    .btn:active{transform:translateY(1px)}
+
+    /* Área principal */
+    main{
+      position:absolute; inset:64px 0 0 0; /* abaixo do header */
+      overflow:hidden;
+    }
+
+    /* Balões */
+    .sky{position:absolute; inset:0; overflow:hidden}
+    .balloon{
+      position:absolute; bottom:-140px; width:var(--size,110px); aspect-ratio:3/4; border-radius:50% 50% 45% 45% / 55% 55% 45% 45%;
+      background:var(--color,#ff8fab); box-shadow: inset -10px -16px 30px rgba(0,0,0,.12), 0 10px 20px rgba(0,0,0,.06);
+      display:grid; place-items:center; color:#fff; font-weight:700; user-select:none; touch-action:manipulation; cursor:pointer;
+      animation: floatUp var(--dur,16s) linear infinite; /* infinito para decoração; os interativos param ao clicar */
+    }
+    .balloon::after{ /* nó e fio */
+      content:""; position:absolute; bottom:-16px; left:50%; transform:translateX(-50%);
+      width:0; height:0; border-left:8px solid transparent; border-right:8px solid transparent; border-top:12px solid var(--color,#ff8fab);
+      filter:drop-shadow(0 4px 2px rgba(0,0,0,.12));
+    }
+    .string{position:absolute; left:50%; transform:translateX(-50%); bottom:-120px; width:2px; height:120px; background:linear-gradient(180deg, rgba(0,0,0,.1), rgba(0,0,0,.04)); border-radius:2px}
+
+    .balloon .label{font-size:clamp(.8rem, 2.6vw, 1rem); padding:.25rem .5rem; background:rgba(0,0,0,.18); border-radius:999px}
+
+    @keyframes floatUp{
+      from{ transform: translateY(0) }
+      to{ transform: translateY(-120vh) }
+    }
+
+    /* Efeito "rebentar" */
+    .pop{
+      animation: pop .35s ease forwards;
+    }
+    @keyframes pop{
+      0%{transform:scale(1); opacity:1}
+      100%{transform:scale(1.35); opacity:0}
+    }
+
+    /* Modal de mensagem */
+    .overlay{position:fixed; inset:0; display:none; place-items:center; background:rgba(0,0,0,.35); z-index:100}
+    .overlay.show{display:grid}
+    .card{
+      width:min(92vw, 560px); background:var(--card); border-radius:24px; box-shadow:0 30px 80px rgba(0,0,0,.2);
+      padding:clamp(16px, 4vw, 28px);
+      animation: rise .4s ease; text-align:center;
+    }
+    @keyframes rise{from{transform:translateY(10px); opacity:0} to{transform:translateY(0); opacity:1}}
+    .card h2{margin:.25rem 0 .5rem; font-size:clamp(1.2rem, 5vw, 1.6rem)}
+    .card p{margin:.25rem 0 1rem; color:var(--muted)}
+    .photo{width:100%; border-radius:18px; overflow:hidden; margin:.5rem 0 1rem; box-shadow:0 10px 30px rgba(0,0,0,.12)}
+    .photo img{width:100%; height:100%; object-fit:cover; display:block}
+    .close{margin-top:.5rem}
+
+    /* Ecrã final */
+    .finale{position:absolute; inset:64px 0 0 0; display:none; align-items:center; justify-content:center; text-align:center; padding:24px}
+    .finale.show{display:flex}
+    .finale .wrap{background:rgba(255,255,255,.75); backdrop-filter: blur(8px); border:1px solid rgba(0,0,0,.06);
+      border-radius:28px; padding:min(5vw,28px); box-shadow:0 30px 80px rgba(0,0,0,.2)}
+    .finale h2{font-size:clamp(1.4rem, 6vw, 2.2rem); margin:0 0 .3rem}
+    .finale p{color:var(--muted); margin:.25rem 0 .75rem}
+
+    /* Canvas confettis */
+    #confetti{position:fixed; inset:0; pointer-events:none; z-index:120}
+
+    /* Dica toque */
+    .hint{position:fixed; bottom:12px; left:50%; transform:translateX(-50%); background:#111; color:#fff; font-size:.9rem; padding:.5rem .75rem; border-radius:999px; opacity:.9}
+
+    /* Acessibilidade (prefere reduz movimento) */
+    @media (prefers-reduced-motion: reduce){
+      .balloon{animation:none}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><span class="tag">🎈 Balões do Amor</span> — 7 Meses: <span style="color:var(--primary)">Deliane & Rúben</span></h1>
+    <div class="controls">
+      <button class="btn" id="btn-music" aria-pressed="false" title="Tocar/Pausar música">▶ Música</button>
+      <button class="btn secondary" id="btn-reset" title="Recomeçar">↺ Recomeçar</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="sky" id="sky" aria-label="Céu com balões a flutuar e balões interativos para clicar"></div>
+    <section class="finale" id="finale" aria-live="polite">
+      <div class="wrap">
+        <h2>Feliz 7º mês, meu amor! 💖</h2>
+        <p>Cada balão era um pedacinho do que sinto por ti. Obrigado por existires, <strong>Deliane</strong>. Amo-te! — <em>Rúben</em></p>
+        <button class="btn" id="btn-again">Quero rebentar outra vez! 😄</button>
+      </div>
+    </section>
+  </main>
+
+  <canvas id="confetti" aria-hidden="true"></canvas>
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Mensagem do balão">
+    <div class="card">
+      <h2 id="msg-title">Com amor, do Rúben</h2>
+      <div class="photo" id="msg-photo" hidden>
+        <img alt="Foto romântica" id="msg-img"/>
+      </div>
+      <p id="msg-text">Texto da mensagem aqui 💌</p>
+      <button class="btn close" id="btn-close">Fechar</button>
+    </div>
+  </div>
+
+  <!-- Áudio (música e efeito "pop") -->
+  <audio id="music" preload="auto" loop>
+    <!-- Troca o src pela tua música (ficheiro local ou URL) -->
+    <source src="musica.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="sfx-pop" preload="auto">
+    <source src="https://cdn.jsdelivr.net/gh/naptha/tinyfiles@master/sounds/pop.mp3" type="audio/mpeg">
+  </audio>
+
+  <div class="hint" id="hint">💡 Dica: toca num balão para abrir a surpresa!</div>
+
+  <script>
+    // =============================
+    // Configuração dos balões 💖
+    // =============================
+    const BALLOONS = [
+      { label:"1", color:"#ff4d6d", title:"Motivo #1", text:"O teu sorriso é a minha luz de todos os dias.", img:"" },
+      { label:"2", color:"#ff758f", title:"Motivo #2", text:"Gosto de como me acalmas só com a tua voz.", img:"" },
+      { label:"3", color:"#ffa6c1", title:"Motivo #3", text:"Contigo, até o silêncio é confortável.", img:"" },
+      { label:"4", color:"#ffd166", title:"Memória #1", text:"A nossa primeira chamada que durou horas ✨", img:"" },
+      { label:"5", color:"#a8e6cf", title:"Promessa", text:"Juro cuidar de ti e do nosso amor, todos os dias.", img:"" },
+      { label:"6", color:"#9bf6ff", title:"Detalhe", text:"Adoro quando dizes o meu nome baixinho.", img:"" },
+      { label:"7", color:"#bdb2ff", title:"Motivo #7", text:"Porque és tu, simplesmente tu, Deliane.", img:"" },
+      { label:"💖", color:"#ff4d6d", title:"Feliz 7 Meses!", text:"Amo-te infinito. — Rúben", img:"" }
+    ];
+
+    // Elementos
+    const sky = document.getElementById('sky');
+    const overlay = document.getElementById('overlay');
+    const msgTitle = document.getElementById('msg-title');
+    const msgText = document.getElementById('msg-text');
+    const msgPhoto = document.getElementById('msg-photo');
+    const msgImg = document.getElementById('msg-img');
+    const btnClose = document.getElementById('btn-close');
+    const finale = document.getElementById('finale');
+    const btnAgain = document.getElementById('btn-again');
+    const btnReset = document.getElementById('btn-reset');
+    const hint = document.getElementById('hint');
+
+    // Áudio
+    const music = document.getElementById('music');
+    const btnMusic = document.getElementById('btn-music');
+    const sfxPop = document.getElementById('sfx-pop');
+
+    let playing = false;
+
+    btnMusic.addEventListener('click', async () => {
+      try {
+        if (!playing) { await music.play(); playing = true; btnMusic.textContent = '⏸ Música'; btnMusic.setAttribute('aria-pressed','true'); }
+        else { music.pause(); playing = false; btnMusic.textContent = '▶ Música'; btnMusic.setAttribute('aria-pressed','false'); }
+      } catch(err){ console.warn('Autoplay bloqueado pelo navegador:', err); }
+    });
+
+    // Criar balões de decoração (não clicáveis)
+    function spawnDecorBalloons(n=16){
+      for(let i=0;i<n;i++){
+        const b = document.createElement('div');
+        b.className = 'balloon';
+        b.style.setProperty('--color', randomColor());
+        b.style.setProperty('--size', `${rand(60,120)}px`);
+        b.style.left = `${rand(0, 92)}vw`;
+        b.style.animationDelay = `${rand(-20,0)}s`;
+        b.style.setProperty('--dur', `${rand(18,28)}s`);
+        const s = document.createElement('div'); s.className='string'; b.appendChild(s);
+        sky.appendChild(b);
+      }
+    }
+
+    // Criar balões interativos (clicáveis)
+    function spawnInteractiveBalloons(list=BALLOONS){
+      list.forEach((item, idx) => {
+        const b = document.createElement('button');
+        b.className = 'balloon';
+        b.setAttribute('aria-label', `Balão ${idx+1}: ${item.title}`);
+        b.style.setProperty('--color', item.color);
+        b.style.setProperty('--size', `${Math.max(96, 112 + idx*2)}px`);
+        b.style.left = `${rand(5, 85)}vw`;
+        b.style.animationDelay = `${rand(-12, -1)}s`;
+        b.style.setProperty('--dur', `${rand(14,20)}s`);
+        b.dataset.index = idx;
+
+        const lab = document.createElement('div'); lab.className='label'; lab.textContent = item.label; b.appendChild(lab);
+        const s = document.createElement('div'); s.className='string'; b.appendChild(s);
+
+        b.addEventListener('pointerdown', onBalloonPress, {passive:true});
+        sky.appendChild(b);
+      });
+    }
+
+    function onBalloonPress(e){
+      const b = e.currentTarget; const idx = Number(b.dataset.index);
+      // Efeito rebentar + som
+      b.classList.add('pop'); sfxPop.currentTime = 0; sfxPop.play().catch(()=>{});
+      // Parar animação e remover depois
+      b.style.animation = 'none';
+      setTimeout(()=> b.remove(), 320);
+      // Mostrar mensagem
+      const data = BALLOONS[idx];
+      openMessage(data);
+      checkEnd();
+    }
+
+    function openMessage({title, text, img}){
+      msgTitle.textContent = title || 'Com amor';
+      msgText.textContent = text || '';
+      if(img){ msgImg.src = img; msgPhoto.hidden = false; }
+      else { msgImg.removeAttribute('src'); msgPhoto.hidden = true; }
+      overlay.classList.add('show');
+    }
+    btnClose.addEventListener('click', ()=> overlay.classList.remove('show'));
+    overlay.addEventListener('click', (e)=>{ if(e.target === overlay) overlay.classList.remove('show'); });
+
+    // Quando todos os balões interativos forem rebentados -> final
+    function checkEnd(){
+      const remaining = [...sky.querySelectorAll('.balloon')].filter(b=> b.dataset.index !== undefined);
+      if(remaining.length <= 1){ // o que foi clicado já vai sair
+        setTimeout(()=> showFinale(), 350);
+      }
+    }
+
+    function showFinale(){
+      finale.classList.add('show');
+      confettiBurst(800);
+      setTimeout(()=> hint.remove(), 400);
+    }
+
+    btnAgain.addEventListener('click', ()=> resetAll());
+    btnReset.addEventListener('click', ()=> resetAll());
+
+    function resetAll(){
+      finale.classList.remove('show');
+      overlay.classList.remove('show');
+      sky.innerHTML = '';
+      spawnDecorBalloons(14);
+      spawnInteractiveBalloons(BALLOONS);
+      showHint();
+    }
+
+    function showHint(){
+      hint.style.display='block';
+      hint.style.opacity='0.95';
+      setTimeout(()=>{ hint.style.transition='opacity .6s'; hint.style.opacity='0'; setTimeout(()=> hint.style.display='none', 650); }, 2800);
+    }
+
+    // Utilidades
+    function rand(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+    function randomColor(){
+      const palette = ['#ff8fab','#ff4d6d','#ffd166','#9bf6ff','#a8e6cf','#bdb2ff','#ffc6ff'];
+      return palette[Math.floor(Math.random()*palette.length)];
+    }
+
+    // =============================
+    // Confettis simples em canvas 🎉
+    // =============================
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
+    let confs = [];
+    function resize(){ canvas.width = innerWidth; canvas.height = innerHeight }
+    addEventListener('resize', resize, {passive:true}); resize();
+
+    function confettiBurst(qty=500){
+      confs = Array.from({length: qty}, ()=>({
+        x: Math.random()*canvas.width,
+        y: -10,
+        r: Math.random()*6 + 2,
+        vx: (Math.random()-0.5)*4,
+        vy: Math.random()*3 + 2,
+        a: Math.random()*Math.PI,
+        s: Math.random()*0.2 + 0.02,
+        color: randomColor()
+      }));
+      requestAnimationFrame(tick);
+      setTimeout(()=> confs = [], 3200);
+    }
+
+    function tick(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      confs.forEach(c=>{
+        c.x += c.vx; c.y += c.vy; c.a += c.s; c.vy += 0.03; // gravidade
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.rotate(c.a);
+        ctx.fillStyle = c.color;
+        ctx.fillRect(-c.r, -c.r*0.4, c.r*2, c.r*0.8);
+        ctx.restore();
+      });
+      if(confs.length) requestAnimationFrame(tick);
+    }
+
+    // Inicialização
+    resetAll();
+  </script>
+</body>
+</html>
